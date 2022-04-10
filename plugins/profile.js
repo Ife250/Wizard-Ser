@@ -9,30 +9,41 @@ let handler = async (m, { conn, usedPrefix }) => {
 
   } finally {
     let about = (await conn.getStatus(who).catch(console.error) || {}).status || ''
-    let { name, limit, exp, lastclaim, registered, regTime, age, level, role } = global.db.data.users[who]
+    if (typeof global.db.data.users[who] == "undefined") {
+      global.db.data.users[who] = {
+        exp: 0,
+        limit: 10,
+        lastclaim: 0,
+        registered: false,
+        name: conn.getName(m.sender),
+        age: -1,
+        regTime: -1,
+        afk: -1,
+        afkReason: '',
+        banned: false,
+        level: 0,
+        call: 0,
+        role: 'Warrior V',
+        autolevelup: false,
+        pc: 0,
+      }
+    }
+    let { name, limit, exp, lastclaim, registered, regTime, age, level, role, banned } = global.db.data.users[who]
     let { min, xp, max } = levelling.xpRange(level, global.multiplier)
     let username = conn.getName(who)
     let math = max - xp
-    let prem = global.prems.includes(who.split`@`[0])
     let str = `
-⭐Name: ${username} ${registered ? '(' + name + ') ': ''}(@${who.replace(/@.+/, '')})${about ? '\n\n🥀About: ' + about : ''}
-🧩Number: ${PhoneNumber('+' + who.replace('@s.whatsapp.net', '')).getNumber('international')}
-⛓️Link: https://wa.me/${who.split`@`[0]}${registered ? '\n\n🎈Age: ' + age : ''}
-☕XP: ${exp} (${math <= 0 ? `Ready to *${usedPrefix}levelup*` : `${math} XP left to levelup`})
-🎟️Level: ${level}
-🎗️Role: *${role}*
-🪵Limit: ${limit}
-🔏Registered: ${registered ? 'Yes (' + new Date(regTime) + ')': 'No'}
-🏮Premium: ${prem ? 'Yes' : 'No'}${lastclaim > 0 ? '\n\n🍁Last Claim: ' + new Date(lastclaim) : ''}
+Name: ${username} ${registered ? '(' + name + ') ' : ''}(@${who.replace(/@.+/, '')})${about != 401 ? '\nInfo: ' + about : ''}
+Number: ${PhoneNumber('+' + who.replace('@s.whatsapp.net', '')).getNumber('international')}
+Link: https://wa.me/${who.split`@`[0]}${registered ? '\nUmur: ' + age : ''}
+Premium: ${prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) ? 'Yes' : 'No'}
+Registered: ${registered ? 'Ya (' + new Date(regTime).toLocaleString() + ')' : 'Registered'}${lastclaim > 0 ? '\nLast Claim: ' + new Date(lastclaim).toLocaleString() : ''}
 `.trim()
     let mentionedJid = [who]
-    conn.sendFile(m.chat, pp, 'pp.jpg', str, m, false, { contextInfo: { mentionedJid }})
+    conn.sendFile(m.chat, pp, 'pp.jpg', banned ? 'if you get banned' : str, m, false, { contextInfo: { mentionedJid } })
   }
 }
 handler.help = ['profile [@user]']
 handler.tags = ['tools']
-handler.command = /^profile$/i
+handler.command = /^profile?$/i
 module.exports = handler
-© 2022 GitHub, Inc.
-Terms
-Privacy
